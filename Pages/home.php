@@ -49,7 +49,7 @@ if (!in_array($fileMimeType, $allowedMimeTypes)) {
 $targetFile = filter_var($targetFile, FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_HIGH);
 
 // Get owner_id from the user session
-$ownerId = $_SESSION['id'];
+//$ownerId = $_SESSION['id'];
 
 // Check if $uploadOk is set to 0 by an error
 if ($uploadOk == 0) {
