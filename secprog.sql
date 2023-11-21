@@ -36,6 +36,13 @@ CREATE TABLE `users` (
   `role` varchar(100) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+CREATE TABLE `login_attempts` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `username` VARCHAR(100) NOT NULL,
+  `attempts` INT NOT NULL,
+  `last_attempt_time` TIMESTAMP NOT NULL
+);
+
 --
 -- Dumping data for table `users`
 --
