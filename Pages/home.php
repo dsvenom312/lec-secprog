@@ -85,7 +85,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
 
 $conn->close();
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -93,10 +92,17 @@ $conn->close();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home</title>
     <link rel="stylesheet" href="../assets/home.css">
-
 </head>
 <body>
-   
+
+    <?php
+    if (isset($_SESSION['error_message'])) {
+        echo '<div style="background-color: #ffcccc; color: #ff0000; padding: 10px; text-align: center;">';
+            echo $_SESSION['error_message'];
+        echo '</div>';
+        unset($_SESSION['error_message']);
+    }
+    ?>
     
     <div class="image-grid">
         <?php include './display.php'; ?>
@@ -119,3 +125,4 @@ $conn->close();
     <!-- <a href="./message.php"><button>Upload Message</button></a> -->
 </body>
 </html>
+
