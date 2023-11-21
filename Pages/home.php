@@ -1,5 +1,7 @@
 <?php
 session_start();
+//print_r($_SESSION['id']);
+
 require "../Controller/connection.php";
 require "../Controller/session_handler.php";
 
@@ -46,6 +48,9 @@ if (!in_array($fileMimeType, $allowedMimeTypes)) {
 // File name sanitization
 $targetFile = filter_var($targetFile, FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_HIGH);
 
+// Get owner_id from the user session
+$ownerId = $_SESSION['id'];
+
 // Check if $uploadOk is set to 0 by an error
 if ($uploadOk == 0) {
     echo "Sorry, your file was not uploaded.";
@@ -63,11 +68,11 @@ if ($uploadOk == 0) {
 
         // Use prepared statements to prevent SQL injection
         if ($uploadOk) {
-            $stmt = $conn->prepare("INSERT INTO photos (filename, comment) VALUES (?, ?)");
-            $stmt->bind_param("ss", $targetFile, $comment);
+            $stmt = $conn->prepare("INSERT INTO photos (filename, comment, owner_id) VALUES (?, ?, ?)");
+            $stmt->bind_param("sss", $targetFile, $comment, $_SESSION['id']);
             $stmt->execute();
             $stmt->close();
-
+            echo($_SESSION['id']);
             echo "File uploaded successfully.";
         } else {
             echo "Sorry, there was an error uploading your file.";
