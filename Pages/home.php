@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
     }
 
     // Check file size
-    if ($_FILES["file"]["size"] > 50000) {
+    if ($_FILES["file"]["size"] > 5 * 1000 * 1000) {
         $_SESSION["error_message"] = "Sorry, your file is too large.";
         $uploadOk = 0;
     }

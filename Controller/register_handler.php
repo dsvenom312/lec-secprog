@@ -32,8 +32,16 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
     $phone_number = $_POST['phone_number'];
     $email = $_POST['email'];
 
+    // Validate email format
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $_SESSION['error_message'] = "Invalid email format";
+        header("Location: ../Pages/register.php");
+        exit();
+    }
+
+    // Validate phone number (only numbers allowed)
+    if (!preg_match('/^\d+$/', $phone_number)) {
+        $_SESSION['error_message'] = "Invalid phone number format. Only numbers are allowed.";
         header("Location: ../Pages/register.php");
         exit();
     }
