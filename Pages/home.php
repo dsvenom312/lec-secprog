@@ -13,83 +13,64 @@ checkSessionExpiration();
 // File upload configuration
 $targetDir = __DIR__ . "/uploads/";
 $uploadOk = 1;
+$imageFileType = strtolower(pathinfo($_FILES["file"]["name"], PATHINFO_EXTENSION));
+$targetFile = $targetDir . uniqid('', true) . '_' . basename($_FILES["file"]["name"]);
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Check if the "file" key is present in the $_FILES array
-    if (!isset($_FILES["file"])) {
-        echo "No file selected.";
-        $uploadOk = 0;
-    } else {
-        // Check if file upload is not empty
-        if ($_FILES["file"]["size"] == 0) {
-            echo "File is empty.";
+// Check if the file is an actual image
+if (!getimagesize($_FILES["file"]["tmp_name"])) {
+    echo "File is not an image.";
+    $uploadOk = 0;
+}
+
+// Check file size
+if ($_FILES["file"]["size"] > 500000) {
+    echo "Sorry, your file is too large.";
+    $uploadOk = 0;
+}
+
+// Allow certain file formats
+$allowedFormats = ["jpg", "jpeg", "png", "gif"];
+if (!in_array($imageFileType, $allowedFormats)) {
+    echo "Sorry, only JPG, JPEG, PNG & GIF files are allowed.";
+    $uploadOk = 0;
+}
+
+// File validation: Check MIME type
+$allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif'];
+$fileMimeType = mime_content_type($_FILES["file"]["tmp_name"]);
+if (!in_array($fileMimeType, $allowedMimeTypes)) {
+    echo "Invalid file type.";
+    $uploadOk = 0;
+}
+
+// File name sanitization
+$targetFile = filter_var($targetFile, FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_HIGH);
+
+// Check if $uploadOk is set to 0 by an error
+if ($uploadOk == 0) {
+    echo "Sorry, your file was not uploaded.";
+} else {
+    // If everything is ok, try to upload file
+    if (move_uploaded_file($_FILES["file"]["tmp_name"], $targetFile)) {
+        // File uploaded successfully, save data to database
+        $comment = htmlspecialchars($_POST['comment'], ENT_QUOTES, 'UTF-8');
+
+        // Additional input validation for comment
+        if (!preg_match('/^[a-zA-Z0-9\s.,!?]+$/', $comment)) {
+            echo "Invalid comment format.";
             $uploadOk = 0;
         }
 
-        // Ensure that the "file" input is a valid file upload
-        if (!is_uploaded_file($_FILES["file"]["tmp_name"])) {
-            echo "Invalid file upload.";
-            $uploadOk = 0;
-        }
+        // Use prepared statements to prevent SQL injection
+        if ($uploadOk) {
+            $stmt = $conn->prepare("INSERT INTO photos (filename, comment) VALUES (?, ?)");
+            $stmt->bind_param("ss", $targetFile, $comment);
+            $stmt->execute();
+            $stmt->close();
 
-        // File name sanitization
-        $targetFile = filter_var($targetDir . uniqid('', true) . '_' . basename($_FILES["file"]["name"]), FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_HIGH);
-
-        // Check if the file is an actual image
-        $fileInfo = getimagesize($_FILES["file"]["tmp_name"]);
-        if ($fileInfo === false) {
-            echo "File is not an image.";
-            $uploadOk = 0;
-        }
-
-        // Check file size
-        if ($_FILES["file"]["size"] > 500000) {
-            echo "Sorry, your file is too large.";
-            $uploadOk = 0;
-        }
-
-        // Allow certain file formats
-        $allowedFormats = ["jpg", "jpeg", "png", "gif"];
-        if (!in_array(strtolower(pathinfo($_FILES["file"]["name"], PATHINFO_EXTENSION)), $allowedFormats)) {
-            echo "Sorry, only JPG, JPEG, PNG & GIF files are allowed.";
-            $uploadOk = 0;
-        }
-
-        // File validation: Check MIME type
-        $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif'];
-        $fileMimeType = mime_content_type($_FILES["file"]["tmp_name"]);
-        if (!in_array($fileMimeType, $allowedMimeTypes)) {
-            echo "Invalid file type.";
-            $uploadOk = 0;
-        }
-
-        // Check if $uploadOk is set to 0 by an error
-        if ($uploadOk == 0) {
-            echo "Sorry, your file was not uploaded.";
+            echo "File uploaded successfully.";
         } else {
-            // If everything is ok, try to upload file
-            if (move_uploaded_file($_FILES["file"]["tmp_name"], $targetFile)) {
-                // File uploaded successfully, save data to database
-                $comment = htmlspecialchars($_POST['comment'], ENT_QUOTES, 'UTF-8');
-
-                // Additional input validation for comment
-                if (!preg_match('/^[a-zA-Z0-9\s.,!?]+$/', $comment)) {
-                    echo "Invalid comment format.";
-                    $uploadOk = 0;
-                }
-
-                // Use prepared statements to prevent SQL injection
-                if ($uploadOk) {
-                    $stmt = $conn->prepare("INSERT INTO photos (filename, comment) VALUES (?, ?)");
-                    $stmt->bind_param("ss", $targetFile, $comment);
-                    $stmt->execute();
-                    $stmt->close();
-
-                    echo "File uploaded successfully.";
-                } else {
-                    echo "Sorry, there was an error uploading your file.";
-                }
-            }
+            echo "Sorry, there was an error uploading your file.";
         }
     }
 }

@@ -8,75 +8,67 @@ if ($_SESSION['is_login'] !== true) {
     exit();
 }
 
-$query = "SELECT id, username FROM users WHERE id != ?";
-$stmt = $conn->prepare($query);
-$stmt->bind_param("s", $_SESSION['id']);
-$stmt->execute();
-$result = $stmt->get_result();
-$recipients = $result->fetch_all(MYSQLI_ASSOC);
-$stmt->close();
+if ($_SERVER['REQUEST_METHOD'] === "POST" && isset($_FILES['photo'], $_POST['comment'])) {
+    $comment = $_POST['comment'];
+    $userId = $_SESSION['id'];
 
-if ($_SERVER['REQUEST_METHOD'] === "POST") {
-    $recipientId = $_POST['recipient'];
-    $message = $_POST['message'];
+    $targetDir = "../uploads/"; // Specify the directory where photos will be stored
+    $targetFile = $targetDir . basename($_FILES["photo"]["name"]);
+    $uploadOk = 1;
+    $imageFileType = strtolower(pathinfo($targetFile, PATHINFO_EXTENSION));
 
-    if (strlen($message) > 200) {
-        $_SESSION["error_message"] = "Message should be up to 200 characters.";
+    // Check if image file is a actual image or fake image
+    $check = getimagesize($_FILES["photo"]["tmp_name"]);
+    if ($check !== false) {
+        $uploadOk = 1;
     } else {
-        $randomNumber = mt_rand(1000, 9999);
-        $messageId = 'ms' . $randomNumber;
-
-        // Insert message data into the database
-        $insertQuery = "INSERT INTO message (id, sender_id, recipient_id, message) VALUES (?, ?, ?, ?)";
-        $insertStmt = $conn->prepare($insertQuery);
-        $insertStmt->bind_param("ssss", $messageId, $_SESSION['id'], $recipientId, $message);
-        $insertStmt->execute();
-
-        if ($insertStmt->affected_rows > 0) {
-            $_SESSION["success_message"] = "Message sent successfully.";
-        } else {
-            $_SESSION["error_message"] = "Failed to send message. Please try again.";
-        }
-        $insertStmt->close();
+        $_SESSION["error_message"] = "File is not an image.";
+        $uploadOk = 0;
     }
-    header("Location: message.php");
-    exit();
+
+    // Check if file already exists
+    if (file_exists($targetFile)) {
+        $_SESSION["error_message"] = "Sorry, file already exists.";
+        $uploadOk = 0;
+    }
+
+    // Check file size
+    if ($_FILES["photo"]["size"] > 5000000) {
+        $_SESSION["error_message"] = "Sorry, your file is too large.";
+        $uploadOk = 0;
+    }
+
+    // Allow certain file formats
+    if ($imageFileType != "jpg" && $imageFileType != "png" && $imageFileType != "jpeg" && $imageFileType != "gif") {
+        $_SESSION["error_message"] = "Sorry, only JPG, JPEG, PNG & GIF files are allowed.";
+        $uploadOk = 0;
+    }
+
+    // Check if $uploadOk is set to 0 by an error
+    if ($uploadOk == 0) {
+        header("Location: upload.php");
+        exit();
+    } else {
+        if (move_uploaded_file($_FILES["photo"]["tmp_name"], $targetFile)) {
+            // File uploaded successfully, insert data into the database
+            $filename = basename($_FILES["photo"]["name"]);
+            $stmt = $conn->prepare("INSERT INTO photos (filename, comment, owner_id) VALUES (?, ?, ?)");
+            $stmt->bind_param("sss", $filename, $comment, $userId);
+            $stmt->execute();
+
+            if ($stmt->affected_rows > 0) {
+                $_SESSION["success_message"] = "The file " . htmlspecialchars(basename($_FILES["photo"]["name"])) . " has been uploaded.";
+            } else {
+                $_SESSION["error_message"] = "Error uploading file. Please try again.";
+            }
+            $stmt->close();
+        } else {
+            $_SESSION["error_message"] = "Sorry, there was an error uploading your file.";
+        }
+        header("Location: upload.php");
+        exit();
+    }
 }
 
 $conn->close();
 ?>
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Send Message</title>
-</head>
-<body>
-    <h1>Send Message</h1>
-    <?php
-    if (isset($_SESSION['error_message'])) {
-        echo '<p style="color: red;">' . $_SESSION['error_message'] . '</p>';
-        unset($_SESSION['error_message']);
-    }
-    if (isset($_SESSION['success_message'])) {
-        echo '<p style="color: green;">' . $_SESSION['success_message'] . '</p>';
-        unset($_SESSION['success_message']);
-    }
-    ?>
-    <form action="message.php" method="post">
-        <label for="recipient">Choose recipient:</label>
-        <select name="recipient" id="recipient" required>
-            <?php foreach ($recipients as $recipient) : ?>
-                <option value="<?= $recipient['id']; ?>"><?= $recipient['username']; ?></option>
-            <?php endforeach; ?>
-        </select><br><br>
-
-        <label for="message">Message (up to 200 characters):</label><br>
-        <textarea name="message" id="message" rows="5" maxlength="200" required></textarea><br><br>
-
-        <input type="submit" value="Send Message">
-    </form>
-</body>
-</html>
