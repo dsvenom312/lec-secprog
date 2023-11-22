@@ -5,7 +5,7 @@ include '../Controller/connection.php';
 $userID = $_SESSION['id'];
 
 // Use prepared statements to prevent SQL injection
-$stmt = $conn->prepare("SELECT id, filename, comment FROM photos WHERE owner_id = ? ORDER BY id DESC LIMIT 5");
+$stmt = $conn->prepare("SELECT id, filename, comment FROM photos WHERE owner_id = ? ORDER BY id ");
 $stmt->bind_param("s", $userID);
 $stmt->execute();
 $stmt->bind_result($photoID, $filename, $comment);
