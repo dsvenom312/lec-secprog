@@ -7,4 +7,3 @@
         $config["password"],
         $config["dbname"]
     );
-
