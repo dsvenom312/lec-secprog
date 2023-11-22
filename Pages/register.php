@@ -13,6 +13,15 @@
     <title>REGISTER</title>
 </head>
 <body>
+
+<?php
+    if (isset($_SESSION['error_message'])) {
+        echo '<div style="color: red; text-align: center;">' . $_SESSION['error_message'] . '</div>';
+        unset($_SESSION['error_message']);
+    }
+    ?>
+
+
 <h2>Register</h2>
     <form action="../Controller/register_handler.php" method="POST">
         <label for="username">Username:</label>
@@ -29,5 +38,7 @@
 
         <input type="submit" value="Register">
     </form>
+    <button onclick="window.location.href='login.php'">login</button>
+
 </body>
 </html>
