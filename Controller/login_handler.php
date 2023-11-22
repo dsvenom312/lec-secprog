@@ -19,8 +19,8 @@ function doLogin($username, $password) {
 function deleteOldLoginAttempts() {
     global $conn;
 
-    // Delete login attempts older than 30 seconds
-    $deleteQuery = "DELETE FROM login_attempts WHERE last_attempt_time < NOW() - INTERVAL 600 SECOND;";
+    // Delete login attempts older than 10 minutes
+    $deleteQuery = "DELETE FROM login_attempts WHERE last_attempt_time < NOW() - INTERVAL 900 SECOND;";
     $conn->query($deleteQuery);
 }
 
@@ -40,15 +40,25 @@ function checkFailedLoginAttempts($username) {
         $lastAttemptTime = strtotime($data['last_attempt_time']);
 
         // You can customize the rate limit duration (e.g., 1 hour)
-        $rateLimitDuration = 600; // 1 hour in seconds
+        $rateLimitDuration = 900; // 10 minutes in seconds
 
         // Check if the user is rate-limited
-        if ($attempts >= 3 && (time() - $lastAttemptTime) < $rateLimitDuration) {
-            $_SESSION["error_message"] = "Too many login attempts. Please try again later.";
+        if ($attempts >= 1 && (time() - $lastAttemptTime) < $rateLimitDuration) {
+            $_SESSION["error_message"] = "Too many login attempts. Please try again in 5 minutes.";
             echo '<script>alert("' . $_SESSION["error_message"] . '"); window.location.href = "../Pages/login.php";</script>';
             exit();
         }
     }
+}
+
+function insertLoginAttempt($username) {
+    global $conn;
+
+    // Insert a new login attempt into the login_attempts table
+    $insertQuery = "INSERT INTO login_attempts (username, attempts, last_attempt_time) VALUES (?, 1, NOW()) ON DUPLICATE KEY UPDATE attempts = attempts + 1, last_attempt_time = NOW();";
+    $stmt = $conn->prepare($insertQuery);
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
 }
 
 if ($_SERVER['REQUEST_METHOD'] === "POST") {
@@ -67,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
         $data = $login_result->fetch_assoc();
         $hashed_password = $data['password'];
 
-        if (hash_equals($hashed_password, hash('sha256',$password))) {
+        if (hash_equals($hashed_password, hash('sha256', $password))) {
             // Check if this user is already logged in from another IP
             if (isset($_SESSION['login_time']) && $_SESSION['username'] === $username && $_SESSION['ip_address'] !== $_SERVER['REMOTE_ADDR']) {
                 $_SESSION["error_message"] = "Multiple logins not allowed. You are already logged in from another device.";
@@ -88,16 +98,28 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
             $_SESSION["id"] = $data["id"];
             $_SESSION['is_login'] = true;
 
+            // Reset login attempts for the user upon successful login
+            $resetAttemptsQuery = "UPDATE login_attempts SET attempts = 0, last_attempt_time = NOW() WHERE username = ?;";
+            $stmt = $conn->prepare($resetAttemptsQuery);
+            $stmt->bind_param("s", $username);
+            $stmt->execute();
+
             header("Location: ../Pages/home.php");
             exit();
         } else {
+            // Increment login attempts for the user upon failed login
+            insertLoginAttempt($username);
+
             $_SESSION["error_message"] = "Incorrect username or password.";
             echo '<script>alert("' . $_SESSION["error_message"] . '"); window.location.href = "../Pages/login.php";</script>';
             session_destroy();
             exit();
         }
     } else {
-        $_SESSION["error_message"] = "Incorrect username or password."; 
+        // Increment login attempts for the user upon failed login
+        insertLoginAttempt($username);
+
+        $_SESSION["error_message"] = "Incorrect username or password.";
         echo '<script>alert("' . $_SESSION["error_message"] . '"); window.location.href = "../Pages/login.php";</script>';
         session_destroy();
         exit();
