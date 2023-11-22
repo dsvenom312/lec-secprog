@@ -25,6 +25,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
         $_SESSION["error_message"] = "Sorry, your file is too large.";
         $uploadOk = 0;
     }
+    
+    if ($_FILES["file"]["size"] === 0) {
+        $_SESSION["error_message"] = "Sorry, your file is too large.";
+        $uploadOk = 0;
+    }
 
     // Allow certain file formats
     $allowedFormats = ["jpg", "jpeg", "png", "gif"];
