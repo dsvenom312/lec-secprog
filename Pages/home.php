@@ -85,6 +85,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
 
 $conn->close();
 ?>
+
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -92,6 +96,20 @@ $conn->close();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home</title>
     <link rel="stylesheet" href="../assets/home.css">
+    
+    <!-- Include the script for toggleEditForm -->
+    <script>
+        function toggleEditForm(photoID) {
+            var commentElement = document.getElementById('comment_' + photoID);
+            var formElement = document.getElementById('editForm_' + photoID);
+
+            // Toggle form visibility
+            formElement.style.display = (formElement.style.display === 'none' || formElement.style.display === '') ? 'block' : 'none';
+
+            // If the form is visible, hide the comment text
+            commentElement.style.display = (formElement.style.display === 'block') ? 'none' : 'block';
+        }
+    </script>
 </head>
 <body>
 
@@ -125,4 +143,5 @@ $conn->close();
     <!-- <a href="./message.php"><button>Upload Message</button></a> -->
 </body>
 </html>
+
 

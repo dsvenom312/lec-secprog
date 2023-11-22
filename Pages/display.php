@@ -11,9 +11,22 @@ $stmt->execute();
 $stmt->bind_result($photoID, $filename, $comment);
 
 while ($stmt->fetch()) {
-    echo "<div>";
-    echo "<img src='../Pages/uploads/" . $filename . "' alt='Uploaded photo'>";
-    echo "<p>" . htmlspecialchars($comment) . "</p>";
+    echo "<div class='photo-container'>";
+    echo "<img src='../Pages/uploads/" . $filename . "' alt='" . htmlspecialchars($comment) . "'>";
+    echo "<p id='comment_{$photoID}'>" . htmlspecialchars($comment) . "</p>";
+    echo "<button onclick='toggleEditForm({$photoID})'>Edit</button>";
+    echo "<form id='editForm_{$photoID}' style='display:none;' method='post' action='./edit_comment.php'>";
+    echo "<input type='hidden' name='photoID' value='{$photoID}'>";
+    echo "<label for='editedComment'>Edit comment:</label>";
+    echo "<input type='text' name='editedComment' value='" . htmlspecialchars($comment) . "' required>";
+    echo "<input type='submit' value='Save'>";
+    echo "</form>";
+
+    echo "<form method='post' action='./delete_photo.php'>";
+    echo "<input type='hidden' name='photoID' value='{$photoID}'>";
+    echo "<input type='submit' value='Delete' onclick='return confirmDelete()'>";
+    echo "</form>";
+
     echo "</div>";
 }
 
