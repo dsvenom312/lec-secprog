@@ -1,5 +1,6 @@
 <?php
-require "./connection.php";
+session_start();
+require "../Controller/connection.php";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Input validation
@@ -14,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($result) {
             // Update successful, redirect back to the home page
-            header("Location: ../Pages/home.php");
+            header("Location: home.php");
             exit();
         } else {
             // Handle database update error
@@ -25,12 +26,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         // Invalid request, redirect to home page
         $_SESSION['error_message'] = "Invalid request. Please try again.";
-        header("Location: ../Pages/home.php");
+        header("Location: home.php");
         exit();
     }
 } else {
     // Invalid request, redirect to home page
-    header("Location: ../Pages/home.php");
+    header("Location: home.php");
     exit();
 }
 ?>
