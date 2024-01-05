@@ -65,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
     }
 
     // Register the user if username and email do not exist
-    $hashed_password = hash('sha256', $password);
+    $hashed_password = password_hash($password, PASSWORD_BCRYPT);
     $random_number = mt_rand(1000, 9999);
 
     $user_id = 'us' . $random_number;

@@ -43,7 +43,7 @@ function checkFailedLoginAttempts($username) {
         $rateLimitDuration = 900; // 10 minutes in seconds
 
         // Check if the user is rate-limited
-        if ($attempts >= 1 && (time() - $lastAttemptTime) < $rateLimitDuration) {
+        if ($attempts >= 10 && (time() - $lastAttemptTime) < $rateLimitDuration) {
             $_SESSION["error_message"] = "Too many login attempts. Please try again in 5 minutes.";
             echo '<script>alert("' . $_SESSION["error_message"] . '"); window.location.href = "../Pages/login.php";</script>';
             exit();
@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
         $data = $login_result->fetch_assoc();
         $hashed_password = $data['password'];
 
-        if (hash_equals($hashed_password, hash('sha256', $password))) {
+        if (password_verify($password, $hashed_password)) {
             // Check if this user is already logged in from another IP
             if (isset($_SESSION['login_time']) && $_SESSION['username'] === $username && $_SESSION['ip_address'] !== $_SERVER['REMOTE_ADDR']) {
                 $_SESSION["error_message"] = "Multiple logins not allowed. You are already logged in from another device.";
@@ -128,3 +128,5 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
 
 $conn->close();
 ?>
+
+http://localhost/secprog-project/lec-secprog/Pages/uploads/1703064185_admin1234.png
