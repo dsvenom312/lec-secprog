@@ -8,11 +8,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
     $uploadOk = 1;
     $imageFileType = strtolower(pathinfo($_FILES["file"]["name"], PATHINFO_EXTENSION));
 
-    // Generate custom filename: timestamp_username.extension
     $timestamp = time();
     $username = $_SESSION['username'];
-    $customFileName = preg_replace('/[^a-zA-Z0-9_.]/', '', $timestamp . '_' . $username . '.' . $imageFileType);
+    $randomNumber1 = mt_rand(1000000000, 9999999999);
+    $randomNumber2 = mt_rand(1000000000, 9999999999);
+    $customFileName = preg_replace('/[^a-zA-Z0-9_.]/', '', $timestamp . '_' . $randomNumber1 . '_' . $randomNumber2 . '.' . $imageFileType);
     $targetFile = $targetDir . $customFileName;
+
 
     // Check if the file is an actual image
     if (!getimagesize($_FILES["file"]["tmp_name"])) {
